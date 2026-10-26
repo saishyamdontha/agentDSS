@@ -62,7 +62,7 @@ class Session(Base):
     __tablename__ = "sessions"
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
-    scenario_id = Column(String, ForeignKey("scenario_runs.id"), nullable=True)
+    scenario_id = Column(UUID(as_uuid=False), ForeignKey("scenario_runs.id"), nullable=True)
     problem_statement = Column(Text, nullable=False)
     run_condition = Column(Enum(RunCondition), nullable=False, default=RunCondition.LIVE_DEMO)
     random_seed = Column(Integer, nullable=True)
@@ -111,12 +111,28 @@ class ScenarioRun(Base):
 
 
 class PreviewLog(Base):
-    """Raw heuristic Impact Preview computation log (reproducibility: Section XI)."""
+    """
+    Raw heuristic Impact Preview computation log (reproducibility: Section XI).
+
+    Impact(d) = w_c * delta_cost + w_t * delta_leadtime + w_r * delta_risk
+    (proposal Section VII). Stores every term of that formula individually,
+    not just the final score, so a specific run can be reproduced or audited
+    without re-deriving the components from input_features.
+    """
     __tablename__ = "preview_log"
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
     decision_event_id = Column(UUID(as_uuid=False), ForeignKey("decisions.event_id"), nullable=False)
     input_features = Column(JSON, nullable=False)
-    risk_score = Column(Float, nullable=False)
-    warning_text = Column(Text, nullable=False)
+
+    delta_cost = Column(Float, nullable=False)
+    delta_leadtime = Column(Float, nullable=False)
+    delta_risk = Column(Float, nullable=False)
+    weight_cost = Column(Float, nullable=False)
+    weight_leadtime = Column(Float, nullable=False)
+    weight_risk = Column(Float, nullable=False)
+    impact_score = Column(Float, nullable=False)  # the final weighted-sum Impact(d)
+
+    risk_score = Column(Float, nullable=True)  # retained: legacy/summary field, not part of the formula
+    warning_text = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

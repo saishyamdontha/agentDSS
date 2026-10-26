@@ -1,11 +1,11 @@
 """
 AgentDSS — Track B — Scenario Suite Generator (Week 1 task 5 / Week 2-3 build-out)
 
-Generates 20-30 synthetic disruption scenarios by templating across
-disruption type and parameter ranges, using a FIXED SEED so the same
-suite can be regenerated identically by anyone re-running this file —
-this is the reproducibility commitment from proposal Section XI, not
-optional polish.
+Generates 60 synthetic disruption scenarios (15 per disruption template,
+stratified evenly) by templating across disruption type and parameter
+ranges, using a FIXED SEED so the same suite can be regenerated
+identically by anyone re-running this file — this is the reproducibility
+commitment from proposal Section XI, not optional polish.
 
 Each scenario becomes one row in the scenario_runs table (models.py)
 and gets run under both RunCondition.BASELINE_NO_OVERRIDE and
@@ -17,7 +17,7 @@ from dataclasses import dataclass, asdict
 
 # Fixed seed — do not change this without noting it explicitly in the
 # report. Changing it silently breaks the reproducibility claim in
-# Section XI ("the same seed reproduces the same 20-30 scenarios").
+# Section XI ("the same seed reproduces the same 60 scenarios").
 SCENARIO_GENERATION_SEED = 42
 
 DISRUPTION_TYPES = [
@@ -68,7 +68,7 @@ def _problem_statement(disruption_type: str, node: str, severity: float, horizon
     return templates[disruption_type]
 
 
-def generate_scenario_suite(n_scenarios: int = 25, seed: int = SCENARIO_GENERATION_SEED) -> list[Scenario]:
+def generate_scenario_suite(n_scenarios: int = 60, seed: int = SCENARIO_GENERATION_SEED) -> list[Scenario]:
     """
     Deterministic given (n_scenarios, seed). Re-running this function
     with the same arguments must always produce the identical suite —
@@ -80,7 +80,8 @@ def generate_scenario_suite(n_scenarios: int = 25, seed: int = SCENARIO_GENERATI
     DISRUPTION_TYPES rather than drawing each independently at random.
     Pure random choice at n=25 produced a lopsided suite in practice
     (9 'combined' vs. 4 'supplier_delay' scenarios out of 25) — stratifying
-    guarantees near-even coverage across types regardless of seed.
+    guarantees near-even coverage across types regardless of seed. At the
+    locked n=60, this produces an exact 15/15/15/15 split (verified).
     """
     rng = random.Random(seed)
     scenarios = []
@@ -133,7 +134,7 @@ def suite_coverage_report(scenarios: list[Scenario]) -> dict:
 
 
 if __name__ == "__main__":
-    suite = generate_scenario_suite(n_scenarios=25)
+    suite = generate_scenario_suite(n_scenarios=60)
 
     print(f"Generated {len(suite)} scenarios with seed={SCENARIO_GENERATION_SEED}\n")
     for s in suite[:3]:
@@ -145,7 +146,7 @@ if __name__ == "__main__":
     for k, v in report.items():
         print(f"  {k}: {v}")
 
-    suite_again = generate_scenario_suite(n_scenarios=25)
+    suite_again = generate_scenario_suite(n_scenarios=60)
     assert [asdict(s) for s in suite] == [asdict(s) for s in suite_again], \
         "Reproducibility broken — same seed produced a different suite!"
     print("\nReproducibility verified: regenerating with the same seed produces an identical suite.")

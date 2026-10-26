@@ -15,7 +15,12 @@ from datetime import datetime, timezone
 
 @dataclass
 class DecisionEvent:
-    """Mirrors the Decision Event Schema (proposal Section VI) exactly."""
+    """
+    Matches the Decision Event Schema (proposal Section VI), plus one
+    addition: confidence_score is denormalized out of options_presented
+    for the chosen option, to make querying by confidence cheap without
+    parsing the JSON blob. Not listed in Section VI's field list as written.
+    """
     agent_role: str
     options_presented: list  # [{"text": str, "confidence": float}, ...]
     decision_type: str       # "accepted_option" | "override"
@@ -130,3 +135,4 @@ if __name__ == "__main__":
     print(context)
     assert context["prior_decisions"][1]["was_override"] is True
     print("\nOverride correctly detected. Smoke test passed.")
+

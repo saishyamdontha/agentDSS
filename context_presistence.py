@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session as DBSession
 
 from database import get_db
-from models import Session as SessionRow, Decision as DecisionRow, DecisionType
+from models import Session as SessionRow, Decision as DecisionRow, DecisionType, AgentRole, RunCondition
 from context_manager import ContextManager, DecisionEvent
 
 def create_session(problem_statement: str, run_condition: str = "live_demo", random_seed: int | None = None) -> str:
@@ -24,7 +24,7 @@ def create_session(problem_statement: str, run_condition: str = "live_demo", ran
         session_row = SessionRow(
             id=str(uuid.uuid4()),
             problem_statement=problem_statement,
-            run_condition=run_condition,
+            run_condition=RunCondition(run_condition),
             random_seed=random_seed,
         )
         db.add(session_row)
@@ -78,7 +78,7 @@ def persist_decision(session_id: str, step_index: int, event: DecisionEvent) -> 
             event_id=event.event_id,
             session_id=session_id,
             step_index=step_index,
-            agent_role=event.agent_role,
+            agent_role=AgentRole(event.agent_role),
             options_presented=event.options_presented,
             decision_type=DecisionType(event.decision_type),
             decision_text=event.decision_text,
@@ -123,4 +123,4 @@ if __name__ == "__main__":
     assert reloaded_cm.get_context_for_next_agent()["prior_decisions"][1]["was_override"] is True
 
     print("Reload verified: 2 decisions persisted and reloaded correctly, override flag intact.")
-    print(reloaded_cm.get_context_for_next_agent()) 
+    print(reloaded_cm.get_context_for_next_agent())
